@@ -1,4 +1,3 @@
-<!-- roleta.html -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -21,6 +20,7 @@
             background: linear-gradient(135deg, #1a2a6c, #b21f1f, #1a2a6c);
             padding: 20px;
             color: white;
+            overflow: hidden;
         }
         
         .container {
@@ -33,6 +33,7 @@
             text-align: center;
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
         }
         
         h1 {
@@ -179,6 +180,41 @@
             color: #e0e0e0;
         }
         
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #ffd700;
+            top: 0;
+            left: 50%;
+            opacity: 0;
+            z-index: 1000;
+        }
+        
+        .reset-button {
+            background: #ffd700;
+            color: #1a2a6c;
+            border: none;
+            padding: 12px 25px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        .reset-button:hover {
+            background: #ffc400;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
+        }
+        
+        .reset-button:active {
+            transform: translateY(1px);
+        }
+        
         @media (max-width: 768px) {
             .container {
                 padding: 15px;
@@ -201,7 +237,7 @@
 <body>
     <div class="container">
         <h1>Roleta de Números</h1>
-        <div class="subtitle">Sorteio com exclusão de números</div>
+        <div class="subtitle">Sorteio de 1 a 30</div>
         
         <div class="wheel-container">
             <div class="pointer"></div>
@@ -234,6 +270,8 @@
             <input type="checkbox" id="soundToggle" checked>
             <label for="soundToggle">Ativar efeitos sonoros</label>
         </div>
+        
+        <button class="reset-button" id="resetButton">Reiniciar Roleta</button>
     </div>
 
     <script>
@@ -246,25 +284,28 @@
             const remainingNumbersEl = document.getElementById('remainingNumbers');
             const excludedNumbersEl = document.getElementById('excludedNumbers');
             const lastWinnerEl = document.getElementById('lastWinner');
+            const resetButton = document.getElementById('resetButton');
             
-            // Dados dos participantes
+            // Dados da roleta
             let numeros = [];
             let isSpinning = false;
             let rotation = 0;
             let currentWinner = null;
+            const allNumbers = Array.from({ length: 30 }, (_, i) => i + 1);
             
             // Inicializar números de 1 a 30
             function initializeNumbers() {
-                numeros = [];
-                for (let i = 1; i <= 30; i++) {
-                    numeros.push(i);
-                }
+                numeros = [...allNumbers];
                 currentWinner = null;
                 winnerName.textContent = "-";
                 lastWinnerEl.textContent = "-";
                 updateStats();
                 createWheel();
                 updateParticipantsList();
+                
+                // Resetar rotação
+                wheel.style.transform = 'rotate(0deg)';
+                rotation = 0;
                 
                 // Indicar que a roleta está ativa
                 localStorage.setItem('roletaActive', 'true');
@@ -273,6 +314,12 @@
             // Criar a roleta visualmente
             function createWheel() {
                 wheel.innerHTML = '';
+                
+                if (numeros.length === 0) {
+                    wheel.innerHTML = '<div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); font-size:2rem; color:#ffd700;">FIM!</div>';
+                    return;
+                }
+                
                 const segmentAngle = 360 / numeros.length;
                 
                 numeros.forEach((number, index) => {
@@ -323,10 +370,16 @@
             // Atualizar lista de participantes
             function updateParticipantsList() {
                 participantsList.innerHTML = '';
-                numeros.forEach(number => {
+                allNumbers.forEach(number => {
                     const div = document.createElement('div');
                     div.className = 'participant';
                     div.textContent = number;
+                    
+                    // Marcar como excluído se o número não estiver mais na roleta
+                    if (!numeros.includes(number)) {
+                        div.classList.add('excluded');
+                    }
+                    
                     participantsList.appendChild(div);
                 });
             }
@@ -334,7 +387,7 @@
             // Atualizar estatísticas
             function updateStats() {
                 remainingNumbersEl.textContent = numeros.length;
-                excludedNumbersEl.textContent = 30 - numeros.length;
+                excludedNumbersEl.textContent = allNumbers.length - numeros.length;
             }
             
             // Tocar som da roleta
@@ -414,16 +467,19 @@
                     // Efeito de confete
                     createConfetti();
                     
+                    // Remover o número sorteado
+                    excludeWinner(winner);
+                    
                     isSpinning = false;
                 }, 4000);
             }
             
             // Excluir número sorteado
-            function excludeWinner() {
-                if (!currentWinner || numeros.length === 0) return;
+            function excludeWinner(winner) {
+                if (!winner || numeros.length === 0) return;
                 
                 // Remover o número sorteado da lista
-                const winnerIndex = numeros.indexOf(currentWinner);
+                const winnerIndex = numeros.indexOf(winner);
                 if (winnerIndex !== -1) {
                     numeros.splice(winnerIndex, 1);
                 }
@@ -432,15 +488,6 @@
                 createWheel();
                 updateParticipantsList();
                 updateStats();
-                
-                // Resetar o vencedor atual
-                winnerName.textContent = "-";
-                currentWinner = null;
-                
-                // Desabilitar botão de girar se não houver mais números
-                if (numeros.length === 0) {
-                    winnerName.textContent = "FIM!";
-                }
             }
             
             // Criar efeito de confete
@@ -491,12 +538,6 @@
                     if (event.key === 'spinCommand') {
                         spinWheel();
                     }
-                    else if (event.key === 'excludeCommand') {
-                        excludeWinner();
-                    }
-                    else if (event.key === 'resetCommand') {
-                        initializeNumbers();
-                    }
                 });
             }
             
@@ -507,6 +548,20 @@
             // Manter roleta ativa enquanto a página estiver aberta
             window.addEventListener('beforeunload', function() {
                 localStorage.removeItem('roletaActive');
+            });
+            
+            // Adicionar evento de clique à roleta
+            wheel.addEventListener('click', spinWheel);
+            
+            // Adicionar evento ao botão de reiniciar
+            resetButton.addEventListener('click', initializeNumbers);
+            
+            // Adicionar tecla de espaço para girar a roleta
+            document.addEventListener('keydown', (e) => {
+                if (e.code === 'Space') {
+                    spinWheel();
+                    e.preventDefault();
+                }
             });
         });
     </script>

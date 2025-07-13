@@ -1,0 +1,201 @@
+<!-- controle.html -->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle da Roleta</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            padding: 20px;
+            color: white;
+        }
+        
+        .container {
+            max-width: 500px;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            color: #ffd700;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+        
+        .status {
+            background: rgba(255, 215, 0, 0.1);
+            border: 2px solid #ffd700;
+            border-radius: 15px;
+            padding: 15px;
+            margin: 20px 0;
+            min-height: 80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .status-title {
+            font-size: 1.2rem;
+            color: #ffd700;
+            margin-bottom: 10px;
+        }
+        
+        .status-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+        }
+        
+        .spin-btn {
+            background: linear-gradient(to bottom, #ff416c, #d31027);
+            color: white;
+            border: none;
+            padding: 25px;
+            font-size: 2rem;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 10px 25px rgba(255, 65, 108, 0.5);
+            font-weight: bold;
+            letter-spacing: 1px;
+            width: 300px;
+            height: 300px;
+            max-width: 300px;
+            margin: 20px auto;
+            display: block;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .spin-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(255, 65, 108, 0.7);
+        }
+        
+        .spin-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 5px 15px rgba(255, 65, 108, 0.5);
+        }
+        
+        .spin-btn:disabled {
+            background: #555;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .spin-btn::after {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -60%;
+            width: 20px;
+            height: 200%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: rotate(25deg);
+            transition: all 0.6s;
+        }
+        
+        .spin-btn:hover::after {
+            left: 120%;
+        }
+        
+        .info {
+            margin-top: 20px;
+            color: #aaa;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .spin-btn {
+                font-size: 1.8rem;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Controle da Roleta</h1>
+        
+        <div class="status">
+            <div class="status-title">Status da Roleta:</div>
+            <div id="roletaStatus" class="status-value">Não conectada</div>
+        </div>
+        
+        <button id="spinButton" class="spin-btn">GIRAR ROULETA</button>
+        
+        <div class="info">
+            <p>Esta página controla a roleta em outra aba/janela.</p>
+            <p>Certifique-se de ter a roleta aberta no mesmo navegador.</p>
+            <p>Quando a roleta estiver conectada, o botão ficará ativo.</p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const spinButton = document.getElementById('spinButton');
+            const roletaStatus = document.getElementById('roletaStatus');
+            
+            // Verificar se a roleta está disponível
+            function checkRoletaStatus() {
+                if (localStorage.getItem('roletaActive') === 'true') {
+                    roletaStatus.textContent = "Conectada";
+                    roletaStatus.style.color = "#4caf50";
+                    spinButton.disabled = false;
+                } else {
+                    roletaStatus.textContent = "Não conectada";
+                    roletaStatus.style.color = "#f44336";
+                    spinButton.disabled = true;
+                }
+            }
+            
+            // Verificar status a cada segundo
+            setInterval(checkRoletaStatus, 1000);
+            checkRoletaStatus();
+            
+            // Event listener para o botão de girar
+            spinButton.addEventListener('click', () => {
+                // Efeito de clique
+                spinButton.classList.add('clicked');
+                setTimeout(() => {
+                    spinButton.classList.remove('clicked');
+                }, 200);
+                
+                // Enviar comando para girar a roleta
+                localStorage.setItem('spinCommand', Date.now().toString());
+            });
+        });
+    </script>
+</body>
+</html>
